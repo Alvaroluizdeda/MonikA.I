@@ -7,18 +7,25 @@ API_URL = "http://127.0.0.1:5000/v1/chat/completions"
 #Model currently loaded in TextGen
 MODEL = "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf"
 
+#Maximum number of messages stored in the conversation history(includes: System, user and assistant).
+MAX_MESSAGES = 80
+
 #Generate an AI response from the conversation history.
 def generate_response(messages):
     payload = {
         "model": MODEL,
         "messages": messages
     }
+    try:
+        response = requests.post(API_URL, json = payload, timeout = 60)
+        response.raise_for_status()
 
-    response = requests.post(API_URL, json = payload)
-    response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+    
+    except requests.exceptions.RequestException as error:
+        return f"API Error: {error}"
 
-    data = response.json()
-    return data["choices"][0]["message"]["content"]
 
 
 
@@ -49,5 +56,9 @@ while True:
         "role": "assistant",
         "content": response_text
     })
+
+    #Loop to clear history.
+    while len(messages) > MAX_MESSAGES + 1:
+        messages.pop(1)
 
 
