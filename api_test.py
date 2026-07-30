@@ -1,32 +1,52 @@
-import requests
+import json
+from memory_extractor import extract_memories
+from api_client import generate_response
 
+# test_messages = [
+#     "My name is Álvaro and i have 20 years.Today,i'm sad, my cat's name is Tonico, now i'm playing videogames."
+#  ]
 
-#TextGen API endpoint
-API_URL = "http://127.0.0.1:5000/v1/chat/completions"
+# for message in test_messages:
+#     print("="*40)
+#     print(f"Input: {message}")
 
-#Model currently loaded in TextGen
-MODEL = "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf"
+#     memories = extract_memories(message)
+#     print(f"Output: {memories}")
+# exit()
 
 #Maximum number of messages stored in the conversation history(includes: System, user and assistant).
 MAX_MESSAGES = 80
 
-#Generate an AI response from the conversation history.
-def generate_response(messages):
-    payload = {
-        "model": MODEL,
-        "messages": messages
-    }
-    try:
-        response = requests.post(API_URL, json = payload, timeout = 60)
-        response.raise_for_status()
+#Loads for the user memory from the JSON file.
+def load_memory():
+    with open("MonikA.I/data/memory.json", "r", encoding = "utf-8") as file:
+        memory = json.load(file)
 
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
-    
-    except requests.exceptions.RequestException as error:
-        return f"API Error: {error}"
+    return memory
 
+#Adds a new memory if it does not already exist.
+def add_memory(memory, fact):
+    if fact.lower() not in [f.lower() for f in memory["facts"]]:
+       memory["facts"].append(fact)
 
+# Saves the current user memory to the JSON file.
+def save_memory(memory):
+    with open("MonikA.I/data/memory.json", "w", encoding = "utf-8") as file:
+        json.dump(memory, file, ensure_ascii = False, indent = 4)
+
+##test
+
+memory = load_memory()
+test_messages = ["Eu gosto de programar", "Eu estudo ciências da computação", "Eu gosto de gatos"]
+for message in test_messages:
+    facts = extract_memories(message)
+
+    for fact in facts:
+        add_memory(memory,fact)
+
+save_memory(memory)
+print(load_memory())
+exit()
 
 
 messages = [
